@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>戴周豪的个人主页 | 海洋科学</title>
+    
+    <style>
+        /* 1. 基础设置与色彩变量 */
+        :root {
+            --primary-blue: #0066cc; 
+            --light-blue: #e6f0fa;   
+            --dark-blue: #004d99; 
+            
+            --bg-color: #f4f4f7;     
+            --card-bg: #ffffff;      
+            --text-main: #1d1d1f;    
+            --text-muted: #86868b;   
+            --border-color: #e5e5ea; 
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* 顶部悬浮毛玻璃导航栏 */
+        .navbar {
+            position: sticky; top: 0; z-index: 999; 
+            background-color: rgba(0, 85, 170, 0.85); 
+            backdrop-filter: saturate(180%) blur(15px); 
+            -webkit-backdrop-filter: saturate(180%) blur(15px); 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+            width: 100%; padding: 16px 0;
+        }
+
+        .nav-links {
+            max-width: 800px; margin: 0 auto; text-align: center;
+        }
+
+        .nav-links a {
+            margin: 0 18px; color: rgba(255, 255, 255, 0.85); 
+            font-weight: 500; font-size: 15px; text-decoration: none;
+            transition: all 0.3s ease; 
+        }
+
+        .nav-links a:hover {
+            color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); 
+        }
+
+        /* 2. 页面布局容器 */
+        .container {
+            max-width: 800px; margin: 0 auto; padding: 40px 20px;
+        }
+
+        /* 3. 卡片样式 */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 18px; padding: 35px 40px; margin-bottom: 30px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04); 
+            border: 1px solid var(--border-color); 
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            scroll-margin-top: 80px; 
+        }
+
+        .card:hover {
+            transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08); 
+        }
+
+        /* 4. 标题与文字样式 */
+        h1, h2, h3 { margin-top: 0; font-weight: 600; }
+        h1 { font-size: 28px; margin-bottom: 10px; }
+        
+        h2 {
+            font-size: 22px; color: var(--primary-blue); 
+            border-bottom: 2px solid var(--light-blue);
+            padding-bottom: 10px; margin-bottom: 20px;
+        }
+
+        p { color: var(--text-muted); font-size: 16px; }
+
+        /* 5. 链接与按钮样式 */
+        .card a {
+            color: var(--primary-blue); text-decoration: none; transition: opacity 0.2s;
+        }
+        .card a:hover { opacity: 0.7; text-decoration: underline; }
+
+        /* 技能标签样式 */
+        .tag-container { display: flex; flex-wrap: wrap; gap: 12px; }
+        .tag {
+            background-color: var(--light-blue); color: var(--primary-blue);
+            padding: 6px 16px; border-radius: 8px; font-size: 14px; font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<header class="navbar">
+    <div class="nav-links">
+        <a href="#about">关于我</a>
+        <a href="#education">教育背景</a>
+        <a href="#projects">项目与成就</a>
+        <a href="#skills">专业技能</a>
+        <a href="#contact">联系方式</a>
+    </div>
+</header>
+
+<div class="container">
+    
+    <!-- 首屏介绍模块 -->
+    <div class="card" id="about" style="text-align: center; padding-top: 50px;">
+        <img src="https://api.dicebear.com/7.x/initials/svg?seed=Ocean&backgroundColor=0066cc" alt="头像" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,102,204,0.2);">
+        <h1>你好，我是 戴周豪</h1>
+        <p style="color: var(--primary-blue); font-weight: 500; font-size: 18px;">浩海求索,立言济世</p>
+        <p style="max-width: 600px; margin: 20px auto 0;">
+            我是中国海洋大学海洋科学专业的一名大一学生，对海洋环流机制、海洋数据挖掘有着浓厚的兴趣。目前我正在积极学习编程与数据分析，期望未来能在相关领域继续深造。
+        </p>
+    </div>
+
+    <!-- 教育背景模块 -->
+    <div class="card" id="education">
+        <h2>📚 教育背景</h2>
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <h3 style="margin-bottom: 5px; color: var(--text-main);">中国海洋大学 (OUC)</h3>
+            <span style="color: var(--text-muted); font-size: 14px;">2025年9月 - 2029年6月 (预期)</span>
+        </div>
+        <p style="margin-top: 5px; color: var(--text-main); font-weight: 500;">理学学士 · 海洋科学(中外合作办学)专业</p>
+        <p><strong>核心课程：</strong> 高等数学、线性代数、大学物理、海洋学（随着大二大三推进，这里可以不断补充你的核心高分专业课）</p>
+    </div>
+
+    <!-- 项目与成就模块 -->
+    <div class="card" id="projects">
+        <h2>🚀 项目与成就</h2>
+        <h3 style="margin-bottom: 5px; color: var(--text-main);">Kaggle 数据科学探索</h3>
+        <p style="margin-top: 5px;">
+            作为海洋科学与数据科学的结合尝试，我目前活跃于 Kaggle 平台，致力于提升自己在数据清洗、特征工程和机器学习模型构建上的能力。
+        </p>
+        <ul style="color: var(--text-muted); line-height: 1.8;">
+            <li><strong>当前目标：</strong> 正在参与[某某数据集/比赛名称] 的分析，主要使用 Python 的 Pandas 和 Scikit-learn 库。</li>
+            <li><strong>Kaggle 主页：</strong> <a href="你的Kaggle主页链接请粘贴在这里" target="_blank">点击访问我的 Kaggle Profile ↗</a></li>
+        </ul>
+
+        <h3 style="margin-bottom: 5px; margin-top: 25px; color: var(--text-main);">学术研究预留位 (大创/实验室经历)</h3>
+        <p style="margin-top: 5px;">[大二/大三时，你可以将参加的大学生创新创业训练计划，或是跟着导师做实验的经历写在这里。比如：研究黄海某海域的叶绿素浓度分布特征。]
+        </p>
+    </div>
+
+    <!-- 技能模块 -->
+    <div class="card" id="skills">
+        <h2>🛠️ 专业技能</h2>
+        <p>目前正在学习和掌握的工具与技能：</p>
+        <div class="tag-container">
+            <span class="tag">Python (Pandas, NumPy)</span>
+            <span class="tag">Vibe coding</span>
+            <span class="tag">数据分析</span>
+            <span class="tag">海洋学基础理论</span>
+            <span class="tag">英语 (CET-4/6备考中)</span>
+            <span class="tag">Markdown / Git</span>
+        </div>
+    </div>
+
+    <!-- 联系方式模块 -->
+    <div class="card" id="contact">
+        <h2>📫 联系我</h2>
+        <p>如果您对我的经历感兴趣，或者有科研/项目的机会，欢迎通过以下方式与我交流：</p>
+        <!-- 修改了QQ邮箱 -->
+        <p>✉️ <strong>邮箱：</strong> <a href="mailto:1310107407@qq.com">1310107407@qq.com</a></p>
+        
+        <!-- 下面两个链接的 href="" 里面，记得等你在平台注册好之后，把链接粘贴进去哦！ -->
+        <p>📊 <strong>Kaggle：</strong> <a href="你的Kaggle主页链接" target="_blank">点击访问我的 Kaggle 主页</a></p>
+        <p>🐙 <strong>GitHub：</strong> <a href="你的GitHub主页链接" target="_blank">点击访问我的 GitHub 主页</a></p>
+    </div>
+
+    <!-- 页脚版权信息 -->
+    <div style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
+        <p style="font-size: 13px; color: var(--text-muted);">&copy; 2026 戴周豪. Handcrafted with pure HTML & CSS.</p>
+    </div>
+
+</div>
+
+</body>
+</html>
