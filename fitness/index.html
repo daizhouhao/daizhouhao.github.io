@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fitness Tracker | 云端同步版</title>
+
+    <!-- 🌟 引入 Supabase 官方大脑 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* CSS 样式完全保持你最满意的极简风格，未做任何改动 */
+        :root {
+            --bg-color: #f2f2f7; --card-bg: #ffffff; --text-main: #1c1c1e;
+            --text-muted: #8e8e93; --success: #34c759; --danger: #ff3b30; --border-color: #e5e5ea;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px 15px; touch-action: manipulation; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 25px; padding-top: 10px; }
+        .date-display { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .weekday-display { font-size: 15px; color: var(--text-muted); margin-top: 4px; font-weight: 500;}
+        .card { background: var(--card-bg); border-radius: 20px; padding: 22px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); position: relative;}
+        
+        /* 云端同步状态指示灯 */
+        #syncStatus { position: absolute; top: 20px; right: 20px; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+        .tracker-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--border-color); }
+        .tracker-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .tracker-info { display: flex; flex-direction: column; gap: 6px; }
+        .tracker-title { font-weight: 600; font-size: 17px; display: flex; align-items: center; gap: 8px;}
+        .tracker-stats { font-size: 13px; color: var(--text-muted); font-weight: 500; display: flex; gap: 8px; }
+        .tracker-stats span { background: var(--bg-color); padding: 4px 8px; border-radius: 6px; }
+        .tracker-stats b { color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums;}
+        .stepper { display: flex; align-items: center; background: var(--bg-color); border-radius: 14px; padding: 4px; }
+        .stepper button { width: 40px; height: 40px; border: none; border-radius: 12px; background: #fff; font-size: 20px; font-weight: 500; color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
+        .stepper button:active { transform: scale(0.9); background: #f0f0f0;}
+        .step-val { width: 40px; text-align: center; font-size: 14px; font-weight: 600; color: var(--text-muted); }
+        .progress-container { width: 100%; background: var(--bg-color); border-radius: 8px; height: 8px; overflow: hidden; margin-top: 15px;}
+        .progress-fill { height: 100%; width: 0%; background: var(--success); transition: 0.4s ease; }
+        .progress-status { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-top: 8px;}
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 600; font-size: 16px; }
+        .calendar-nav button { background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; padding: 5px 15px; transition: 0.2s; border-radius: 8px; }
+        .calendar-nav button:hover { background: var(--bg-color); color: var(--text-main); }
+        .calendar-nav button:active { transform: scale(0.9); }
+        .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .day-cell { aspect-ratio: 1; border-radius: 8px; background: var(--bg-color); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--text-muted); position: relative; transition: 0.3s; box-sizing: border-box; }
+        .day-cell.today { border: 2px solid #ccc; color: var(--text-main); }
+        .day-cell.goal-reached { background: var(--success); color: white; border: none; }
+        .day-cell.rule-broken { border: 2px solid var(--danger); }
+        .day-cell.rule-broken::after { content: ''; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 4px rgba(255, 59, 48, 0.5); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="date-display" id="dateDisplay">加载中...</div>
+        <div class="weekday-display" id="weekdayDisplay"></div>
+    </div>
+
+    <div class="card">
+        <span id="syncStatus">☁️ 连接云端中...</span>
+        
+        <div class="tracker-item">
+            <div class="tracker-info">
+                <div class="tracker-title">🏃‍♂️ 跑步 (km)</div>
+                <div class="tracker-stats">
+                    <span>今 <b id="runToday">0.0</b></span>
+                    <span>月 <b id="runMonth">0.0</b></span>
+                    <span>年 <b id="runYear">0.0</b></span>
+                </div>
+            </div>
+            <div class="stepper">
+                <button onclick="updateStat('run', -0.5)">-</button>
+                <span class="step-val">0.5</span>
+                <button onclick="updateStat('run', 0.5)">+</button>
+            </div>
+        </div>
+
+        <div class="tracker-item">
+            <div class="tracker-info">
+                <div class="tracker-title">🏋️ 健身 (h)</div>
+                <div class="tracker-stats">
+                    <span>今 <b id="gymToday">0.0</b></span>
+                    <span>月 <b id="gymMonth">0.0</b></span>
+                    <span>年 <b id="gymYear">0.0</b></span>
+                </div>
+            </div>
+            <div class="stepper">
+                <button onclick="updateStat('gym', -0.5)">-</button>
+                <span class="step-val">0.5</span>
+                <button onclick="updateStat('gym', 0.5)">+</button>
+            </div>
+        </div>
+
+        <div class="tracker-item" style="border-bottom: none; padding-bottom: 0;">
+            <div class="tracker-info">
+                <div class="tracker-title">🎮 游戏 (h)</div>
+                <div class="tracker-stats">
+                    <span>今 <b id="gameToday">0.0</b></span>
+                    <span>月 <b id="gameMonth">0.0</b></span>
+                    <span>年 <b id="gameYear">0.0</b></span>
+                </div>
+            </div>
+            <div class="stepper">
+                <button onclick="updateStat('game', -0.5)">-</button>
+                <span class="step-val">0.5</span>
+                <button onclick="updateStat('game', 0.5)">+</button>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-fill" id="gameProgressBar"></div>
+        </div>
+        <div class="progress-status">
+            <span id="dayTypeLabel">载入中...</span>
+            <span id="gameTimeLimit">0.0 / 0.0 h</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="calendar-nav">
+            <button onclick="changeMonth(-1)">&#10094;</button>
+            <span id="viewingMonthLabel">...</span>
+            <button onclick="changeMonth(1)">&#10095;</button>
+        </div>
+        <div class="calendar-header">
+            <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 🔴 戴周豪的极客配置区：填入你的 Supabase 密钥
+    // ==========================================
+    const SUPABASE_URL = 'https://iuycnptvmpcrxzeqqbnb.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_UQa-Z90q7XbO76rtxjNYAg_6FwY68UI';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // ==========================================
+
+    const pad = n => n < 10 ? '0' + n : n;
+    const todayObj = new Date();
+    const currentYear = todayObj.getFullYear();
+    const currentMonth = todayObj.getMonth(); 
+    const currentDate = todayObj.getDate();
+    const currentDayOfWeek = todayObj.getDay(); 
+    const todayKey = `${currentYear}-${pad(currentMonth + 1)}-${pad(currentDate)}`;
+
+    let viewYear = currentYear;
+    let viewMonth = currentMonth;
+    let db = {}; // 数据将从云端加载
+    let maxGameHours = 1.0;
+
+    // 1️⃣ 从云端下载数据 (Download)
+    async function fetchCloudData() {
+        const statusDOM = document.getElementById('syncStatus');
+        try {
+            const { data, error } = await supabaseClient.from('fitness_logs').select('*');
+            if (error) throw error;
+            
+            // 把云端数据转换成本地 db 格式
+            db = {};
+            data.forEach(row => {
+                db[row.date] = { run: row.run, gym: row.gym, game: row.game };
+            });
+
+            // 确保今天的空记录存在
+            if (!db[todayKey]) db[todayKey] = { run: 0.0, gym: 0.0, game: 0.0 };
+            
+            statusDOM.innerText = '🟢 已同步';
+            calculateAndRender();
+        } catch (err) {
+            console.error("数据库连接失败:", err);
+            statusDOM.innerText = '🔴 连接失败 (离线模式)';
+            if (!db[todayKey]) db[todayKey] = { run: 0.0, gym: 0.0, game: 0.0 };
+            calculateAndRender();
+        }
+    }
+
+    // 2️⃣ 上传数据到云端 (Upload)
+    async function pushCloudData() {
+        const statusDOM = document.getElementById('syncStatus');
+        statusDOM.innerText = '🟡 正在保存...';
+        try {
+            const todayData = db[todayKey];
+            const { error } = await supabaseClient.from('fitness_logs').upsert({
+                date: todayKey,
+                run: todayData.run,
+                gym: todayData.gym,
+                game: todayData.game
+            });
+            if (error) throw error;
+            statusDOM.innerText = '🟢 已同步';
+        } catch (err) {
+            console.error("保存失败:", err);
+            statusDOM.innerText = '🔴 保存失败';
+        }
+    }
+
+    function initApp() {
+        const months =["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+        const weekdays =["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+        // 将年月日和星期合并成一句极具仪式感的话
+        document.getElementById('dateDisplay').innerText = `${currentYear}年${currentMonth + 1}月${currentDate}日, ${weekdays[currentDayOfWeek]}`;
+        // 隐藏掉原来单独显示星期的那个小框
+        document.getElementById('weekdayDisplay').style.display = 'none';
+
+        const isWeekend = (currentDayOfWeek === 0 || currentDayOfWeek === 6);
+        maxGameHours = isWeekend ? 3.0 : 1.0;
+        document.getElementById('dayTypeLabel').innerText = isWeekend ? "🏖️ 周末上限 (3h)" : "💼 工作日上限 (1h)";
+
+        // 启动时立刻连接云端
+        fetchCloudData();
+    }
+
+    // 核心更新逻辑
+    function updateStat(type, delta) {
+        if (!db[todayKey]) db[todayKey] = { run: 0.0, gym: 0.0, game: 0.0 };
+        let todayData = db[todayKey];
+        
+        if (delta < 0 && todayData[type] + delta < 0) return; 
+
+        if (type === 'game' && delta > 0 && todayData.game + delta > maxGameHours) {
+            setTimeout(() => { alert(`⚠️ 警告：今天的游戏时间已超限额！日历将记下这一笔违规！`); }, 100);
+        }
+
+        todayData[type] += delta;
+        todayData[type] = Math.round(todayData[type] * 10) / 10;
+
+        calculateAndRender();
+        
+        // 🌟 每次点击后，自动把数据推送到云端！
+        pushCloudData();
+    }
+
+    // (下方为原来的渲染逻辑，未变动)
+    function calculateAndRender() {
+        let stats = { today: db[todayKey] || { run: 0, gym: 0, game: 0 }, month: { run: 0, gym: 0, game: 0 }, year:  { run: 0, gym: 0, game: 0 } };
+        const currentMMStr = pad(currentMonth + 1);
+        for (let key in db) {
+            const [y, m, d] = key.split('-');
+            if (parseInt(y) === currentYear) {
+                stats.year.run += db[key].run; stats.year.gym += db[key].gym; stats.year.game += db[key].game;
+                if (m === currentMMStr) { stats.month.run += db[key].run; stats.month.gym += db[key].gym; stats.month.game += db[key].game; }
+            }
+        }
+        const types =['run', 'gym', 'game'];
+        types.forEach(t => {
+            document.getElementById(`${t}Today`).innerText = stats.today[t].toFixed(1);
+            document.getElementById(`${t}Month`).innerText = stats.month[t].toFixed(1);
+            document.getElementById(`${t}Year`).innerText = stats.year[t].toFixed(1);
+        });
+
+        const todayGame = stats.today.game;
+        document.getElementById('gameTimeLimit').innerText = `${todayGame.toFixed(1)} / ${maxGameHours.toFixed(1)} h`;
+        const percentage = Math.min((todayGame / maxGameHours) * 100, 100);
+        const progressBar = document.getElementById('gameProgressBar');
+        progressBar.style.width = percentage + '%';
+
+        if (todayGame > maxGameHours) progressBar.style.backgroundColor = 'var(--danger)'; 
+        else if (percentage >= 80) progressBar.style.backgroundColor = '#ff9500'; 
+        else progressBar.style.backgroundColor = 'var(--success)';
+
+        renderCalendar();
+    }
+
+    function changeMonth(offset) {
+        viewMonth += offset;
+        if (viewMonth < 0) { viewMonth = 11; viewYear--; } else if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const months =["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+        document.getElementById('viewingMonthLabel').innerText = `${viewYear}年 ${months[viewMonth]}`;
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = ''; 
+        const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+        const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+        const viewMMStr = pad(viewMonth + 1);
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell'; cell.innerText = i;
+            if (viewYear === currentYear && viewMonth === currentMonth && i === currentDate) cell.classList.add('today');
+
+            const checkKey = `${viewYear}-${viewMMStr}-${pad(i)}`;
+            if (db[checkKey]) {
+                const data = db[checkKey];
+                if (data.run >= 1.0 || data.gym >= 0.5) cell.classList.add('goal-reached');
+                const cellDateObj = new Date(viewYear, viewMonth, i);
+                const limitForThatDay = (cellDateObj.getDay() === 0 || cellDateObj.getDay() === 6) ? 3.0 : 1.0;
+                if (data.game > limitForThatDay) cell.classList.add('rule-broken');
+            }
+            grid.appendChild(cell);
+        }
+    }
+
+    window.onload = initApp;
+
+</script>
+
+</body>
+</html>
